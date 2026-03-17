@@ -1,20 +1,12 @@
 // Product Database
 const products = [
     { id: 1, sku: 'Rs01K', name: 'Premium Chiffon Hijab', price: 1299, img: 'prod1.jpg' },
-    
     { id: 2, sku: 'Rs02K', name: 'Elegant Black Abaya', price: 1299, img: 'prod2.jpg' },
-    
     { id: 3, sku: 'Rs03K', name: 'Everyday Cotton Hijab', price: 1499, img: 'prod3.jpg' },
-    
     { id: 4, sku: 'Rs04K', name: 'Premium Jersey Hijab', price: 1299, img: 'prod4.jpg' },
-    
-        { id: 1, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' },
-        
+    { id: 8, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' }, // Changed ID to 8 to avoid duplicate ID 1
     { id: 5, sku: 'Rs05K', name: 'Elegant Black Abaya', price: 1399, img: 'cat4.jpg' },
-    
-    { id: 6, sku: 'Rs06K', name: 'Cotton Hijab', 
-    price: 180, img: 'prod5.jpg' },
-    
+    { id: 6, sku: 'Rs06K', name: 'Cotton Hijab', price: 180, img: 'prod5.jpg' },
     { id: 7, sku: 'Rs07K', name: 'Jersey Hijab', price: 1299, img: 'cat3.jpg' }
 ];
 
@@ -238,25 +230,39 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     if (orderMethod === 'whatsapp') {
         window.open(`https://wa.me/${sellerWhatsAppNumber}?text=${encodeURIComponent(msg)}`, '_blank');
         closeCheckout();
+        
+        if(checkoutMode === 'cart') {
+            cart = []; 
+            document.getElementById('cart-counter').innerText = 0;
+        }
+        this.reset();
+        
     } else if (orderMethod === 'instagram') {
-        // Copy to clipboard and show green Toast instead of ugly alert
-        navigator.clipboard.writeText(msg).then(() => {
-            showToast("অর্ডারের ডিটেইলস কপি হয়েছে! Instagram-এ Paste করুন।"); // Green Toast Popup
+        // BULLETPROOF MOBILE COPY FALLBACK
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = msg;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            document.execCommand("copy");
+            showToast("অর্ডারের ডিটেইলস কপি হয়েছে! Instagram-এ Paste করুন।"); 
             
-            // Wait 1.5 seconds so the user can read the message, then open Instagram
             setTimeout(() => {
                 window.open(`https://ig.me/m/${instagramUsername}`, '_blank');
                 closeCheckout();
+                
+                if(checkoutMode === 'cart') {
+                    cart = []; 
+                    document.getElementById('cart-counter').innerText = 0;
+                }
+                document.getElementById('checkout-form').reset();
             }, 1500);
-
-        }).catch(err => {
-            showToast("Failed to copy. Please use WhatsApp.");
-        });
+            
+        } catch (err) {
+            showToast("Copy failed on this browser. Please try WhatsApp.");
+        }
+        document.body.removeChild(tempTextArea);
     }
-
-    if(checkoutMode === 'cart') {
-        cart = []; 
-        document.getElementById('cart-counter').innerText = 0;
-    }
-    this.reset();
 });
