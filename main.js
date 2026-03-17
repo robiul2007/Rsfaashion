@@ -14,10 +14,12 @@ let cart = [];
 let currentProduct = null;
 let currentUser = null;
 let checkoutMode = 'single'; 
-let orderMethod = 'whatsapp'; // Tracks which button was clicked (WhatsApp or Instagram)
+let orderMethod = 'whatsapp'; 
+let currentOrderTotal = 0; 
 
 const sellerWhatsAppNumber = '919876543210'; 
-const instagramUsername = 'rs__fashion____009'; // Client's IG username
+const instagramUsername = 'rs__fashion____009'; 
+const myUpiId = 'skri250@ybl'; 
 
 window.onload = () => {
     renderProducts();
@@ -29,6 +31,28 @@ function showToast(msg) {
     toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
     toast.classList.add('show');
     setTimeout(() => { toast.classList.remove('show'); }, 3000);
+}
+
+// NEW: Dark Mode Toggle Logic
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const themeIcon = document.getElementById('theme-toggle');
+    
+    if (document.body.classList.contains('dark-mode')) {
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+    } else {
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+    }
+}
+
+// NEW: Share Product Logic
+function shareProduct() {
+    if(!currentProduct) return;
+    const shareText = `Hey! Check out this beautiful ${currentProduct.name} at RS Fashion. Only ₹${currentProduct.price}!\n\nBrowse the collection here: https://rsfashion01.netlify.app`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    window.open(whatsappUrl, '_blank');
 }
 
 // Image Slider Logic
@@ -94,7 +118,7 @@ function filterProducts() {
             suggestionsBox.innerHTML += `
                 <div class="suggestion-item" onclick="openProduct(${p.id}); document.getElementById('search-container').style.display='none';">
                     <img src="${p.img}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;">
-                    <div><div style="font-weight: 500;">${p.name}</div><div style="color: #c5a880; font-size: 12px;">ID: ${p.sku} | ₹${p.price}</div></div>
+                    <div><div style="font-weight: 500;">${p.name}</div><div style="color: var(--accent-color); font-size: 12px;">ID: ${p.sku} | ₹${p.price}</div></div>
                 </div>
             `;
         });
@@ -137,7 +161,7 @@ function renderCart() {
             container.innerHTML += `
                 <div class="cart-item">
                     <img src="${item.img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
-                    <div style="flex-grow: 1;"><p style="font-size: 11px; color: #888;">ID: ${item.sku}</p><h4>${item.name}</h4><p style="color: #c5a880; font-weight: bold;">₹${item.price}</p></div>
+                    <div style="flex-grow: 1;"><p style="font-size: 11px; color: var(--text-gray);">ID: ${item.sku}</p><h4>${item.name}</h4><p style="color: var(--accent-color); font-weight: bold;">₹${item.price}</p></div>
                     <i class="fas fa-trash" style="color: red; cursor: pointer; padding: 10px;" onclick="removeFromCart(${index})"></i>
                 </div>
             `;
@@ -166,7 +190,7 @@ function processLogin() {
     if(name && phone) {
         const uniqueId = `Rs${Math.floor(1000 + Math.random() * 9000)}R`;
         currentUser = { name, phone, id: uniqueId };
-        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${name}</b><br>ID: <span style="color: #c5a880">${uniqueId}</span>`;
+        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${name}</b><br>ID: <span style="color: var(--accent-color)">${uniqueId}</span>`;
         document.getElementById('prof-name').innerText = name;
         document.getElementById('prof-phone').innerText = phone;
         document.getElementById('prof-id').innerText = uniqueId;
@@ -185,28 +209,40 @@ function logoutUser() {
     showToast("Logged out successfully.");
 }
 
-// MODIFIED: Restrict checkout without login
+function toggleUPI(show) {
+    const upiSection = document.getElementById('upi-section');
+    upiSection.style.display = show ? 'block' : 'none';
+}
+
 function openCheckoutModal(mode) {
-    // Check if user is logged in
     if (!currentUser) {
         showToast("Please login first to place an order!");
-        openLogin(); // Open the login modal automatically
-        return; // Stop the checkout process here
+        openLogin(); 
+        return; 
     }
 
     checkoutMode = mode;
+    currentOrderTotal = 0;
+
     if (mode === 'single') {
-        document.getElementById('checkout-product-name').innerText = `1 Item - ₹${currentProduct.price}`;
+        currentOrderTotal = currentProduct.price;
+        document.getElementById('checkout-product-name').innerText = `1 Item - ₹${currentOrderTotal}`;
     } else {
         if(cart.length === 0) { showToast("Your cart is empty!"); return; }
-        let total = cart.reduce((sum, item) => sum + item.price, 0);
-        document.getElementById('checkout-product-name').innerText = `Cart Total (${cart.length} items) - ₹${total}`;
+        currentOrderTotal = cart.reduce((sum, item) => sum + item.price, 0);
+        document.getElementById('checkout-product-name').innerText = `Cart Total (${cart.length} items) - ₹${currentOrderTotal}`;
     }
     
-    // Auto-fill the checkout form with the logged-in user's details to save their time
     document.getElementById('chk-name').value = currentUser.name;
     document.getElementById('chk-phone').value = currentUser.phone;
     
+    document.getElementById('upi-amount').innerText = currentOrderTotal;
+    const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order Payment`;
+    document.getElementById('upi-link').href = upiLink;
+
+    document.querySelector('input[value="Cash on Delivery (COD)"]').checked = true;
+    toggleUPI(false);
+
     document.getElementById('checkout-modal').style.display = 'flex';
 }
 
@@ -218,10 +254,11 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     const phone = document.getElementById('chk-phone').value;
     const address = `${document.getElementById('chk-add1').value}, ${document.getElementById('chk-add2').value}`;
     const pin = document.getElementById('chk-pin').value;
+    
+    const selectedPayMode = document.querySelector('input[name="pay_mode"]:checked').value;
 
     let msg = `*New Order Request!*\n\n`;
     
-    // GUARANTEED USER ID IN MESSAGE
     msg += `*User ID:* ${currentUser.id}\n`;
     msg += `*Registered Name:* ${currentUser.name}\n\n`;
     
@@ -238,11 +275,12 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         });
     }
 
-    msg += `\n*Total Amount:* ₹${finalTotal}\n\n`;
+    msg += `\n*Total Amount:* ₹${finalTotal}\n`;
+    msg += `*Payment Mode:* ${selectedPayMode}\n\n`; 
+    
     msg += `*Delivery Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
-    msg += `_COD Available_\n*Order from the website*`;
+    msg += `*Order from the website*`;
 
-    // Check which button was clicked
     if (orderMethod === 'whatsapp') {
         window.open(`https://wa.me/${sellerWhatsAppNumber}?text=${encodeURIComponent(msg)}`, '_blank');
         closeCheckout();
@@ -254,12 +292,11 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         this.reset();
         
     } else if (orderMethod === 'instagram') {
-        // BULLETPROOF MOBILE COPY FALLBACK
         const tempTextArea = document.createElement("textarea");
         tempTextArea.value = msg;
         document.body.appendChild(tempTextArea);
         tempTextArea.select();
-        tempTextArea.setSelectionRange(0, 99999); // For mobile devices
+        tempTextArea.setSelectionRange(0, 99999); 
         
         try {
             document.execCommand("copy");

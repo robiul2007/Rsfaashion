@@ -18,6 +18,8 @@
             <div class="brand-logo" onclick="navigate('home-view')">RS FASHION</div>
         </div>
         <div class="header-right">
+            <i class="fas fa-moon" id="theme-toggle" onclick="toggleTheme()" style="margin-right: 10px;"></i> 
+            
             <i class="fas fa-search" onclick="toggleSearch()"></i> 
             <i class="far fa-user" onclick="handleUserClick()"></i> 
             <div class="cart-icon-wrap" onclick="navigate('cart-view')">
@@ -46,7 +48,7 @@
             <a href="#" onclick="handleUserClick(); closeSidebar();"><i class="fas fa-user"></i> My Profile</a>
             <a href="#" onclick="navigate('about-view'); closeSidebar();"><i class="fas fa-info-circle"></i> About Developer</a>
         </div>
-        <div style="padding: 20px; text-align: center; font-size: 14px; color: #888;">
+        <div style="padding: 20px; text-align: center; font-size: 14px; color: var(--text-gray);">
             <p id="sidebar-user-display">Not Logged In</p>
         </div>
     </div>
@@ -83,6 +85,7 @@
         <h2 class="section-title">Trending Now</h2>
         <div class="products-grid" id="products-grid"></div>
     </div>
+
     <div id="product-view" class="view-section">
         <div class="product-detail-container">
             <div class="detail-img-box">
@@ -94,7 +97,7 @@
                 </div>
             </div>
             <div class="detail-info-box">
-                <p style="color: #888; font-size: 13px; margin-bottom: 5px;" id="pd-id">Product ID: </p>
+                <p style="color: var(--text-gray); font-size: 13px; margin-bottom: 5px;" id="pd-id">Product ID: </p>
                 <h1 class="detail-title" id="pd-title">Product Name</h1>
                 <p class="detail-price" id="pd-price">₹0</p>
                 <ul class="features">
@@ -106,10 +109,15 @@
                     <button class="btn-add" onclick="addToCartFromDetail()">Add to Cart</button>
                     <button class="btn-buy" onclick="openCheckoutModal('single')">Buy Now</button>
                 </div>
+                
+                <button class="btn-share" onclick="shareProduct()">
+                    <i class="fab fa-whatsapp"></i> Share with Friends
+                </button>
+
                 <div class="review-section">
                     <h3>Leave a Review</h3>
                     <textarea class="review-box" rows="3" placeholder="Write your review here after purchase..."></textarea>
-                    <button style="padding: 10px 15px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Submit Review</button>
+                    <button style="padding: 10px 15px; background: var(--primary-color); color: var(--bg-color); border: none; border-radius: 5px; cursor: pointer;">Submit Review</button>
                 </div>
             </div>
         </div>
@@ -161,7 +169,7 @@
             <h2 style="font-family: 'Playfair Display'; margin-bottom: 20px;">User Login</h2>
             <input type="text" id="login-name" placeholder="Full Name">
             <input type="tel" id="login-number" placeholder="Mobile Number">
-            <button onclick="processLogin()" style="width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">Login / Generate ID</button>
+            <button onclick="processLogin()" style="width: 100%; padding: 12px; background: var(--primary-color); color: var(--bg-color); border: none; border-radius: 5px; font-size: 16px; cursor: pointer;">Login / Generate ID</button>
         </div>
     </div>
 
@@ -177,7 +185,25 @@
                 <input type="text" id="chk-add2" placeholder="Address Line 2 (Area, Landmark)">
                 <input type="text" id="chk-pin" placeholder="Pincode" required>
                 
-                <p style="font-size: 13px; color: #666; margin-top: 10px; margin-bottom: 5px; text-align: left;">Choose order method:</p>
+                <div style="margin: 15px 0; padding: 15px; background: var(--light-bg); border: 1px solid var(--border-color); border-radius: 5px; text-align: left;">
+                    <p style="font-size: 14px; font-weight: bold; margin-bottom: 8px;"><i class="fas fa-wallet"></i> Payment Method:</p>
+                    <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                        <input type="radio" name="pay_mode" value="Cash on Delivery (COD)" checked onchange="toggleUPI(false)"> Cash on Delivery (COD)
+                    </label>
+                    <label style="display: block; cursor: pointer;">
+                        <input type="radio" name="pay_mode" value="Paid Online via UPI" onchange="toggleUPI(true)"> Pay Online (UPI)
+                    </label>
+                    
+                    <div id="upi-section" style="display: none; margin-top: 15px; text-align: center;">
+                        <a id="upi-link" href="#" target="_blank" style="display: inline-block; padding: 12px; background: #6528F7; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; width: 100%; font-size: 15px;">
+                            <i class="fas fa-qrcode"></i> Pay ₹<span id="upi-amount">0</span> Now
+                        </a>
+                        <p style="font-size: 11px; color: var(--text-gray); margin-top: 5px;">(Opens GPay, PhonePe, Paytm)</p>
+                        <p style="font-size: 12px; color: #d9534f; margin-top: 5px; font-weight: bold;">*Please complete payment before submitting order.</p>
+                    </div>
+                </div>
+
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: 10px; margin-bottom: 5px; text-align: left;">Send order details via:</p>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit" onclick="orderMethod='whatsapp'" style="flex: 1; padding: 12px; background: #25D366; color: white; border: none; border-radius: 5px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
                         <i class="fab fa-whatsapp"></i> WhatsApp
