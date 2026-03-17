@@ -21,11 +21,12 @@ const sellerWhatsAppNumber = '919876543210';
 const instagramUsername = 'rs__fashion____009'; 
 const myUpiId = 'skri250@ybl'; 
 
-window.onload = () => {
-    restoreSession(); // NEW: Load saved User & Cart data
+// Initialization (More Secure Load)
+document.addEventListener("DOMContentLoaded", () => {
+    restoreSession(); // Load saved User & Cart data FIRST
     renderProducts();
     startAutoSlide();
-};
+});
 
 function showToast(msg) {
     const toast = document.getElementById('toast');
@@ -34,7 +35,7 @@ function showToast(msg) {
     setTimeout(() => { toast.classList.remove('show'); }, 3000);
 }
 
-// NEW: Dark Mode Toggle Logic
+// Dark Mode Toggle Logic
 function toggleTheme() {
     document.body.classList.toggle('dark-mode');
     const themeIcon = document.getElementById('theme-toggle');
@@ -48,7 +49,7 @@ function toggleTheme() {
     }
 }
 
-// NEW: Share Product Logic
+// Share Product Logic
 function shareProduct() {
     if(!currentProduct) return;
     const shareText = `Hey! Check out this beautiful ${currentProduct.name} at RS Fashion. Only ₹${currentProduct.price}!\n\nBrowse the collection here: https://rsfashion01.netlify.app`;
@@ -147,7 +148,7 @@ function changeMainImg(src) { document.getElementById('pd-img').src = src; }
 /* CART LOGIC WITH LOCALSTORAGE */
 function addToCartFromDetail() {
     cart.push(currentProduct);
-    saveCart(); // Save to localStorage
+    saveCart(); 
     document.getElementById('cart-counter').innerText = cart.length;
     showToast(`${currentProduct.name} added to cart!`);
 }
@@ -175,7 +176,7 @@ function renderCart() {
 
 function removeFromCart(index) {
     cart.splice(index, 1);
-    saveCart(); // Save to localStorage
+    saveCart(); 
     document.getElementById('cart-counter').innerText = cart.length;
     renderCart();
 }
@@ -200,7 +201,6 @@ function processLogin() {
         const uniqueId = `Rs${Math.floor(1000 + Math.random() * 9000)}R`;
         currentUser = { name, phone, id: uniqueId };
         
-        // SAVE USER TO LOCAL STORAGE
         localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
         
         updateProfileUI();
@@ -212,7 +212,6 @@ function processLogin() {
 
 function logoutUser() {
     currentUser = null;
-    // REMOVE USER FROM LOCAL STORAGE
     localStorage.removeItem('rsFashionUser');
     
     updateProfileUI();
@@ -238,13 +237,11 @@ function updateProfileUI() {
 
 // RESTORE SESSION ON PAGE LOAD
 function restoreSession() {
-    // Restore User
     const savedUser = localStorage.getItem('rsFashionUser');
     if(savedUser) {
         currentUser = JSON.parse(savedUser);
         updateProfileUI();
     }
-    // Restore Cart
     const savedCart = localStorage.getItem('rsFashionCart');
     if(savedCart) {
         cart = JSON.parse(savedCart);
