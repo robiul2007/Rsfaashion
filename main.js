@@ -4,7 +4,7 @@ const products = [
     { id: 2, sku: 'Rs02K', name: 'Elegant Black Abaya', price: 1299, img: 'prod2.jpg' },
     { id: 3, sku: 'Rs03K', name: 'Everyday Cotton Hijab', price: 1499, img: 'prod3.jpg' },
     { id: 4, sku: 'Rs04K', name: 'Premium Jersey Hijab', price: 1299, img: 'prod4.jpg' },
-    { id: 8, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' }, // Changed ID to 8 to avoid duplicate ID 1
+    { id: 8, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' }, 
     { id: 5, sku: 'Rs05K', name: 'Elegant Black Abaya', price: 1399, img: 'cat4.jpg' },
     { id: 6, sku: 'Rs06K', name: 'Cotton Hijab', price: 180, img: 'prod5.jpg' },
     { id: 7, sku: 'Rs07K', name: 'Jersey Hijab', price: 1299, img: 'cat3.jpg' }
@@ -185,7 +185,15 @@ function logoutUser() {
     showToast("Logged out successfully.");
 }
 
+// MODIFIED: Restrict checkout without login
 function openCheckoutModal(mode) {
+    // Check if user is logged in
+    if (!currentUser) {
+        showToast("Please login first to place an order!");
+        openLogin(); // Open the login modal automatically
+        return; // Stop the checkout process here
+    }
+
     checkoutMode = mode;
     if (mode === 'single') {
         document.getElementById('checkout-product-name').innerText = `1 Item - ₹${currentProduct.price}`;
@@ -194,6 +202,11 @@ function openCheckoutModal(mode) {
         let total = cart.reduce((sum, item) => sum + item.price, 0);
         document.getElementById('checkout-product-name').innerText = `Cart Total (${cart.length} items) - ₹${total}`;
     }
+    
+    // Auto-fill the checkout form with the logged-in user's details to save their time
+    document.getElementById('chk-name').value = currentUser.name;
+    document.getElementById('chk-phone').value = currentUser.phone;
+    
     document.getElementById('checkout-modal').style.display = 'flex';
 }
 
@@ -207,7 +220,10 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     const pin = document.getElementById('chk-pin').value;
 
     let msg = `*New Order Request!*\n\n`;
-    if(currentUser) msg += `*User ID:* ${currentUser.id}\n`;
+    
+    // GUARANTEED USER ID IN MESSAGE
+    msg += `*User ID:* ${currentUser.id}\n`;
+    msg += `*Registered Name:* ${currentUser.name}\n\n`;
     
     msg += `*Items Ordered:*\n`;
     let finalTotal = 0;
@@ -223,7 +239,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     }
 
     msg += `\n*Total Amount:* ₹${finalTotal}\n\n`;
-    msg += `*Customer Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
+    msg += `*Delivery Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
     msg += `_COD Available_\n*Order from the website*`;
 
     // Check which button was clicked
