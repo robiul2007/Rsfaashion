@@ -22,6 +22,7 @@ const instagramUsername = 'rs__fashion____009';
 const myUpiId = 'skri250@ybl'; 
 
 window.onload = () => {
+    restoreSession(); // NEW: Load saved User & Cart data
     renderProducts();
     startAutoSlide();
 };
@@ -143,8 +144,10 @@ function openProduct(id) {
 
 function changeMainImg(src) { document.getElementById('pd-img').src = src; }
 
+/* CART LOGIC WITH LOCALSTORAGE */
 function addToCartFromDetail() {
     cart.push(currentProduct);
+    saveCart(); // Save to localStorage
     document.getElementById('cart-counter').innerText = cart.length;
     showToast(`${currentProduct.name} added to cart!`);
 }
@@ -172,10 +175,16 @@ function renderCart() {
 
 function removeFromCart(index) {
     cart.splice(index, 1);
+    saveCart(); // Save to localStorage
     document.getElementById('cart-counter').innerText = cart.length;
     renderCart();
 }
 
+function saveCart() {
+    localStorage.setItem('rsFashionCart', JSON.stringify(cart));
+}
+
+/* USER LOGIC WITH LOCALSTORAGE */
 function handleUserClick() {
     if(currentUser) navigate('profile-view');
     else openLogin();
@@ -190,10 +199,11 @@ function processLogin() {
     if(name && phone) {
         const uniqueId = `Rs${Math.floor(1000 + Math.random() * 9000)}R`;
         currentUser = { name, phone, id: uniqueId };
-        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${name}</b><br>ID: <span style="color: var(--accent-color)">${uniqueId}</span>`;
-        document.getElementById('prof-name').innerText = name;
-        document.getElementById('prof-phone').innerText = phone;
-        document.getElementById('prof-id').innerText = uniqueId;
+        
+        // SAVE USER TO LOCAL STORAGE
+        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
+        
+        updateProfileUI();
         closeLogin();
         navigate('profile-view');
         showToast("Successfully logged in!");
@@ -202,11 +212,44 @@ function processLogin() {
 
 function logoutUser() {
     currentUser = null;
-    document.getElementById('sidebar-user-display').innerText = "Not Logged In";
+    // REMOVE USER FROM LOCAL STORAGE
+    localStorage.removeItem('rsFashionUser');
+    
+    updateProfileUI();
     document.getElementById('login-name').value = '';
     document.getElementById('login-number').value = '';
     navigate('home-view');
     showToast("Logged out successfully.");
+}
+
+function updateProfileUI() {
+    if(currentUser) {
+        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${currentUser.name}</b><br>ID: <span style="color: var(--accent-color)">${currentUser.id}</span>`;
+        document.getElementById('prof-name').innerText = currentUser.name;
+        document.getElementById('prof-phone').innerText = currentUser.phone;
+        document.getElementById('prof-id').innerText = currentUser.id;
+    } else {
+        document.getElementById('sidebar-user-display').innerText = "Not Logged In";
+        document.getElementById('prof-name').innerText = "Name";
+        document.getElementById('prof-phone').innerText = "...";
+        document.getElementById('prof-id').innerText = "...";
+    }
+}
+
+// RESTORE SESSION ON PAGE LOAD
+function restoreSession() {
+    // Restore User
+    const savedUser = localStorage.getItem('rsFashionUser');
+    if(savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateProfileUI();
+    }
+    // Restore Cart
+    const savedCart = localStorage.getItem('rsFashionCart');
+    if(savedCart) {
+        cart = JSON.parse(savedCart);
+        document.getElementById('cart-counter').innerText = cart.length;
+    }
 }
 
 function toggleUPI(show) {
@@ -287,6 +330,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         
         if(checkoutMode === 'cart') {
             cart = []; 
+            saveCart(); // Clear local storage cart
             document.getElementById('cart-counter').innerText = 0;
         }
         this.reset();
@@ -308,6 +352,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
                 
                 if(checkoutMode === 'cart') {
                     cart = []; 
+                    saveCart(); // Clear local storage cart
                     document.getElementById('cart-counter').innerText = 0;
                 }
                 document.getElementById('checkout-form').reset();
