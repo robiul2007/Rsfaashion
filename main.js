@@ -1,14 +1,41 @@
-// Product Database
+// Product Database (Updated names based on screenshots)
 const products = [
-    { id: 1, sku: 'Rs01K', name: 'Premium Chiffon Hijab', price: 1299, img: 'prod1.jpg' },
-    { id: 2, sku: 'Rs02K', name: 'Elegant Black Abaya', price: 1299, img: 'prod2.jpg' },
-    { id: 3, sku: 'Rs03K', name: 'Everyday Cotton Hijab', price: 1499, img: 'prod3.jpg' },
-    { id: 4, sku: 'Rs04K', name: 'Premium Jersey Hijab', price: 1299, img: 'prod4.jpg' },
-    { id: 8, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' }, 
-    { id: 5, sku: 'Rs05K', name: 'Elegant Black Abaya', price: 1399, img: 'cat4.jpg' },
-    { id: 6, sku: 'Rs06K', name: 'Cotton Hijab', price: 180, img: 'prod5.jpg' },
-      { id: 9, sku: 'Rs09K', name: 'Elegant green Abaya', price: 1299, img: 'slider3.jpg' },
-    { id: 7, sku: 'Rs07K', name: 'Jersey Hijab', price: 1299, img: 'cat3.jpg' }
+    { id: 1, sku: 'Rs01K', name: 'Soft Pink Layered Abaya', price: 1299, img: 'prod1.jpg' },
+    { id: 2, sku: 'Rs02K', name: 'Classic Black Open Abaya', price: 1299, img: 'prod2.jpg' },
+    { id: 3, sku: 'Rs03K', name: 'Grey Tiered Zip-Front Abaya', price: 1499, img: 'prod3.jpg' },
+    { id: 4, sku: 'Rs04K', name: 'Mauve Silver-Striped Abaya', price: 1299, img: 'prod4.jpg' },
+    { id: 8, sku: 'Rs01J', name: 'Dubai Premium Hijab Bundle', price: 1299, img: 'prod2.jpg' }, 
+    { id: 5, sku: 'Rs05K', name: 'Black Abaya with Gold Detailing', price: 1399, img: 'cat4.jpg' },
+    { id: 6, sku: 'Rs06K', name: 'Black Cotton Hijab with Gold Lace', price: 180, img: 'prod5.jpg' },
+    { id: 9, sku: 'Rs09K', name: 'Elegant Olive Green Shrug Abaya', price: 1299, img: 'slider3.jpg' },
+    { id: 7, sku: 'Rs07K', name: 'Embroidered Dual Color Abaya Set', price: 1299, img: 'cat3.jpg' },
+    
+    
+    { id: 10, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 130, img: 'prodt1.jpg' },
+    
+    
+    
+    { id: 11, sku: 'Rs02l', name: 'Premium Pink Stone Hijab', price: 129, img: 'prodt2.jpg' },
+    
+    
+    //
+    //Dubai Tricolor Hijab Collection
+    
+    
+    { id: 12, sku: 'Rs03l', name: 'Dubai Mint Green Stone Hijab', price: 130, img: 'prodt3.jpg' },
+    
+    
+    { id: 13, sku: 'Rs04l', name: 'Dubai Tricolor Hijab Collection', price: 100, img: 'prodt4.jpg' },
+    
+    
+    { id: 14, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 129, img: 'prodt5.jpg' }, 
+    
+    
+    
+    { id: 15, sku: 'Rs05l', name: 'Exclusive Dubai Georgette Hijab', price: 120, img: 'prodt6.jpg' },
+    
+    
+    { id: 16, sku: 'Rs06l', name: 'Classic Cotton Hijab', price: 120, img: 'prodt7.jpg' }
 ];
 
 let cart = [];
