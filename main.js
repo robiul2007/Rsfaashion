@@ -9,32 +9,12 @@ const products = [
     { id: 6, sku: 'Rs06K', name: 'Black Cotton Hijab with Gold Lace', price: 180, img: 'prod5.jpg' },
     { id: 9, sku: 'Rs09K', name: 'Elegant Olive Green Shrug Abaya', price: 1299, img: 'slider3.jpg' },
     { id: 7, sku: 'Rs07K', name: 'Embroidered Dual Color Abaya Set', price: 1299, img: 'cat3.jpg' },
-    
-    
     { id: 10, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 130, img: 'prodt1.jpg' },
-    
-    
-    
     { id: 11, sku: 'Rs02l', name: 'Premium Pink Stone Hijab', price: 129, img: 'prodt2.jpg' },
-    
-    
-    //
-    //Dubai Tricolor Hijab Collection
-    
-    
     { id: 12, sku: 'Rs03l', name: 'Dubai Mint Green Stone Hijab', price: 130, img: 'prodt3.jpg' },
-    
-    
     { id: 13, sku: 'Rs04l', name: 'Dubai Tricolor Hijab Collection', price: 100, img: 'prodt4.jpg' },
-    
-    
     { id: 14, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 129, img: 'prodt5.jpg' }, 
-    
-    
-    
     { id: 15, sku: 'Rs05l', name: 'Exclusive Dubai Georgette Hijab', price: 120, img: 'prodt6.jpg' },
-    
-    
     { id: 16, sku: 'Rs06l', name: 'Classic Cotton Hijab', price: 120, img: 'prodt7.jpg' }
 ];
 
@@ -51,7 +31,7 @@ const myUpiId = 'skri250@ybl';
 
 // Initialization (More Secure Load)
 document.addEventListener("DOMContentLoaded", () => {
-    restoreSession(); // Load saved User & Cart data FIRST
+    restoreSession(); 
     renderProducts();
     startAutoSlide();
 });
@@ -263,7 +243,6 @@ function updateProfileUI() {
     }
 }
 
-// RESTORE SESSION ON PAGE LOAD
 function restoreSession() {
     const savedUser = localStorage.getItem('rsFashionUser');
     if(savedUser) {
@@ -316,6 +295,36 @@ function openCheckoutModal(mode) {
 
 function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
 
+// NEW FUNCTION: Big Instruction Modal for Instagram
+function showInstagramInstructionModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '9999'; // Stay on top of everything
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="text-align: center; padding: 30px 20px;">
+            <div style="width: 60px; height: 60px; background: var(--light-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <i class="fab fa-instagram" style="font-size: 35px; color: #E1306C;"></i>
+            </div>
+            <h2 style="font-family: 'Playfair Display'; margin-bottom: 10px; color: var(--text-main);">One Last Step!</h2>
+            
+            <div style="background: var(--light-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: left; margin-bottom: 20px;">
+                <p style="font-size: 14px; color: var(--text-main); margin-bottom: 8px;">✅ <b>Order details copied automatically!</b></p>
+                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">1. Click the button below to open Instagram.</p>
+                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">2. Go to RS Fashion's chat.</p>
+                <p style="font-size: 13px; color: var(--text-gray);">3. <b>Paste</b> the message and send to confirm!</p>
+            </div>
+
+            <button onclick="window.open('https://ig.me/m/${instagramUsername}', '_blank'); this.parentElement.parentElement.remove();" style="width: 100%; padding: 14px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(225, 48, 108, 0.3);">
+                Open Instagram
+            </button>
+            <p onclick="this.parentElement.parentElement.remove()" style="margin-top: 15px; color: var(--text-gray); cursor: pointer; text-decoration: underline; font-size: 13px;">Cancel</p>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 document.getElementById('checkout-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const name = document.getElementById('chk-name').value;
@@ -355,7 +364,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         
         if(checkoutMode === 'cart') {
             cart = []; 
-            saveCart(); // Clear local storage cart
+            saveCart(); 
             document.getElementById('cart-counter').innerText = 0;
         }
         this.reset();
@@ -369,19 +378,17 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         
         try {
             document.execCommand("copy");
-            showToast("অর্ডারের ডিটেইলস কপি হয়েছে! Instagram-এ Paste করুন।"); 
             
-            setTimeout(() => {
-                window.open(`https://ig.me/m/${instagramUsername}`, '_blank');
-                closeCheckout();
-                
-                if(checkoutMode === 'cart') {
-                    cart = []; 
-                    saveCart(); // Clear local storage cart
-                    document.getElementById('cart-counter').innerText = 0;
-                }
-                document.getElementById('checkout-form').reset();
-            }, 1500);
+            // Show the new beautiful instruction modal instead of a toast timeout
+            closeCheckout();
+            showInstagramInstructionModal();
+            
+            if(checkoutMode === 'cart') {
+                cart = []; 
+                saveCart(); 
+                document.getElementById('cart-counter').innerText = 0;
+            }
+            document.getElementById('checkout-form').reset();
             
         } catch (err) {
             showToast("Copy failed on this browser. Please try WhatsApp.");
