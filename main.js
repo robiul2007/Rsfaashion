@@ -7,6 +7,7 @@ const products = [
     { id: 8, sku: 'Rs01J', name: 'new Chiffon Hijab', price: 1299, img: 'prod2.jpg' }, 
     { id: 5, sku: 'Rs05K', name: 'Elegant Black Abaya', price: 1399, img: 'cat4.jpg' },
     { id: 6, sku: 'Rs06K', name: 'Cotton Hijab', price: 180, img: 'prod5.jpg' },
+      { id: 9, sku: 'Rs09K', name: 'Elegant green Abaya', price: 1299, img: 'slider3.jpg' },
     { id: 7, sku: 'Rs07K', name: 'Jersey Hijab', price: 1299, img: 'cat3.jpg' }
 ];
 
