@@ -22,12 +22,12 @@ let cart = [];
 let currentProduct = null;
 let currentUser = null;
 let checkoutMode = 'single'; 
-let orderMethod = 'whatsapp'; 
+let orderMethod = 'instagram'; // Default is now instagram
 let currentOrderTotal = 0; 
 
 const sellerWhatsAppNumber = '919876543210'; 
 const instagramUsername = 'rs__fashion____009'; 
-const myUpiId = 'skri250@ybl'; 
+const myUpiId = ''; // UPI ID REMOVED FOR NOW
 
 // Initialization (More Secure Load)
 document.addEventListener("DOMContentLoaded", () => {
@@ -312,8 +312,19 @@ function openCheckoutModal(mode) {
     document.getElementById('chk-phone').value = currentUser.phone;
     
     document.getElementById('upi-amount').innerText = currentOrderTotal;
-    const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order Payment`;
-    document.getElementById('upi-link').href = upiLink;
+    
+    // UPDATED SMART UPI LOGIC
+    if (myUpiId === '') {
+        document.getElementById('upi-link').href = "#";
+        document.getElementById('upi-link').onclick = (e) => { 
+            e.preventDefault(); 
+            alert("Payment system is ready! Please provide your UPI ID to activate this button."); 
+        };
+    } else {
+        const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order Payment`;
+        document.getElementById('upi-link').href = upiLink;
+        document.getElementById('upi-link').onclick = null;
+    }
 
     document.querySelector('input[value="Cash on Delivery (COD)"]').checked = true;
     toggleUPI(false);
@@ -323,7 +334,7 @@ function openCheckoutModal(mode) {
 
 function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
 
-// NEW FUNCTION: Big Instruction Modal for Instagram
+// Big Instruction Modal for Instagram
 function showInstagramInstructionModal() {
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -386,16 +397,10 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     msg += `*Delivery Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
     msg += `*Order from the website*`;
 
+    // UPDATED BUTTON LOGIC
     if (orderMethod === 'whatsapp') {
-        window.open(`https://wa.me/${sellerWhatsAppNumber}?text=${encodeURIComponent(msg)}`, '_blank');
-        closeCheckout();
-        
-        if(checkoutMode === 'cart') {
-            cart = []; 
-            saveCart(); 
-            document.getElementById('cart-counter').innerText = 0;
-        }
-        this.reset();
+        showToast("WhatsApp ordering is coming soon! Please use Instagram to place your order.");
+        return; // Stops here, doesn't close the modal
         
     } else if (orderMethod === 'instagram') {
         const tempTextArea = document.createElement("textarea");
@@ -418,7 +423,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
             document.getElementById('checkout-form').reset();
             
         } catch (err) {
-            showToast("Copy failed on this browser. Please try WhatsApp.");
+            showToast("Copy failed on this browser. Please try again.");
         }
         document.body.removeChild(tempTextArea);
     }
