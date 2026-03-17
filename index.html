@@ -82,7 +82,8 @@
 
         <h2 class="section-title">Trending Now</h2>
         <div class="products-grid" id="products-grid"></div>
-    </div>    <div id="product-view" class="view-section">
+    </div>
+    <div id="product-view" class="view-section">
         <div class="product-detail-container">
             <div class="detail-img-box">
                 <img id="pd-img" src="" alt="Product">
@@ -119,7 +120,7 @@
             <h2 class="section-title">Your Cart</h2>
             <div id="cart-items-container"></div>
             <div class="cart-total" id="cart-total">Total: ₹0</div>
-            <button class="order-all-btn" onclick="openCheckoutModal('cart')"><i class="fab fa-whatsapp"></i> Checkout All Items</button>
+            <button class="order-all-btn" onclick="openCheckoutModal('cart')"><i class="fas fa-shopping-cart"></i> Checkout All Items</button>
         </div>
     </div>
 
@@ -175,9 +176,16 @@
                 <input type="text" id="chk-add1" placeholder="Address Line 1 (House, Street)" required>
                 <input type="text" id="chk-add2" placeholder="Address Line 2 (Area, Landmark)">
                 <input type="text" id="chk-pin" placeholder="Pincode" required>
-                <button type="submit" style="width: 100%; padding: 12px; background: #25D366; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <i class="fab fa-whatsapp"></i> Order via WhatsApp
-                </button>
+                
+                <p style="font-size: 13px; color: #666; margin-top: 10px; margin-bottom: 5px; text-align: left;">Choose order method:</p>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" onclick="orderMethod='whatsapp'" style="flex: 1; padding: 12px; background: #25D366; color: white; border: none; border-radius: 5px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button type="submit" onclick="orderMethod='instagram'" style="flex: 1; padding: 12px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border: none; border-radius: 5px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fab fa-instagram"></i> Instagram
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -187,7 +195,7 @@
         <p style="font-size: 14px; margin-bottom: 20px;">Premium modest wear shipped directly to you.</p>
         <div class="footer-social-box">
             <a href="https://youtube.com/@r.s_saru_vlog?si=G0fs6vu89ByI4r6C" target="_blank" class="social-btn yt"><i class="fab fa-youtube"></i> Subscribe on YouTube</a>
-            <a href="https://www.instagram.com/rs__fashion____009/#" target="_blank" class="social-btn ig"><i class="fab fa-instagram"></i> Follow on Instagram</a>
+            <a href="https://www.instagram.com/rs__fashion____009?igsh=d3JtYnpoMmZ5a3Ri" target="_blank" class="social-btn ig"><i class="fab fa-instagram"></i> Follow on Instagram</a>
         </div>
         <p style="font-size: 12px; color: #aaa; margin-top: 20px;">© 2026 RS Fashion. Developed by Robiul Islam.</p>
     </footer>
@@ -195,4 +203,3 @@
     <script src="main.js"></script>
 </body>
 </html>
-
