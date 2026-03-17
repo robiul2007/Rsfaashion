@@ -103,6 +103,30 @@ function renderProducts() {
     });
 }
 
+// NEW FUNCTION: Render Suggested Products
+function renderSuggestedProducts(excludeId) {
+    const suggestedGrid = document.getElementById('suggested-products-grid');
+    if (!suggestedGrid) return;
+    
+    suggestedGrid.innerHTML = '';
+    
+    let availableProducts = products.filter(p => p.id !== excludeId);
+    availableProducts = availableProducts.sort(() => 0.5 - Math.random());
+    let suggestions = availableProducts.slice(0, 4);
+    
+    suggestions.forEach(p => {
+        suggestedGrid.innerHTML += `
+            <div class="product-card" onclick="openProduct(${p.id})">
+                <div class="product-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
+                <div class="product-info">
+                    <h3 class="p-title">${p.name}</h3>
+                    <p class="p-price">₹${p.price}</p>
+                </div>
+            </div>
+        `;
+    });
+}
+
 function openSidebar() {
     document.getElementById('sidebar').classList.add('open');
     document.getElementById('sidebar-overlay').style.display = 'block';
@@ -148,6 +172,10 @@ function openProduct(id) {
     document.getElementById('pd-id').innerText = `Product ID: ${currentProduct.sku}`;
     document.getElementById('pd-title').innerText = currentProduct.name;
     document.getElementById('pd-price').innerText = `₹${currentProduct.price}`;
+    
+    // Call the new suggestion function
+    renderSuggestedProducts(id);
+    
     navigate('product-view');
 }
 
@@ -379,7 +407,6 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         try {
             document.execCommand("copy");
             
-            // Show the new beautiful instruction modal instead of a toast timeout
             closeCheckout();
             showInstagramInstructionModal();
             
