@@ -184,10 +184,17 @@ function syncCart() { if(currentUser && currentUser.dbKey) { fetch(`${DB_URL}use
 
 function addToCartFromDetail() {
     if(!currentProduct) return;
-    if(currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0) return showToast("Sold Out!", "error");
+    
+    // THE OUT OF STOCK BOUNCER (CART)
+    if(currentProduct.status === 'Out of Stock' || parseInt(currentProduct.stock) <= 0) {
+        return showToast("Sorry, product is out of stock!", "error");
+    }
+    
     cart.push({ ...currentProduct, price: currentProduct.finalPrice || currentProduct.price });
     document.getElementById('cart-counter').innerText = cart.length;
-    localStorage.setItem('rsFashionCart', JSON.stringify(cart)); syncCart(); showToast("Added to cart!");
+    localStorage.setItem('rsFashionCart', JSON.stringify(cart)); 
+    syncCart(); 
+    showToast("Added to cart!");
 }
 
 function renderCart() {
@@ -212,11 +219,26 @@ window.selectPayment = function(type) {
     }
 }
 
+
+
+
+
 function openCheckoutModal(mode) {
     if (!currentUser) return showToast("Login First!", "error");
     checkoutMode = mode;
     let orderItems = checkoutMode === 'single' ? [currentProduct] : cart;
+    
+    // THE OUT OF STOCK BOUNCER (CHECKOUT)
+    let soldOutItem = orderItems.find(item => item.status === 'Out of Stock' || parseInt(item.stock) <= 0);
+    if (soldOutItem) {
+        return showToast("Sorry, product is out of stock!", "error");
+    }
+    
     let isUpiOnly = orderItems.some(i => i.paymentMode === 'UPI Only');
+
+    
+    
+    
     
     checkoutBaseTotal = orderItems.reduce((s, i) => s + (i.finalPrice || i.price), 0);
     checkoutDiscount = 0; checkoutFinalTotal = checkoutBaseTotal; appliedCouponCode = "";
