@@ -1,430 +1,364 @@
-// Product Database (Updated names based on screenshots)
-const products = [
-    { id: 1, sku: 'Rs01K', name: 'Soft Pink Layered Abaya', price: 1299, img: 'prod1.jpg' },
-    { id: 2, sku: 'Rs02K', name: 'Classic Black Open Abaya', price: 1299, img: 'prod2.jpg' },
-    { id: 3, sku: 'Rs03K', name: 'Grey Tiered Zip-Front Abaya', price: 1499, img: 'prod3.jpg' },
-    { id: 4, sku: 'Rs04K', name: 'Mauve Silver-Striped Abaya', price: 1299, img: 'prod4.jpg' },
-    { id: 8, sku: 'Rs01J', name: 'Dubai Premium Hijab Bundle', price: 1299, img: 'prod2.jpg' }, 
-    { id: 5, sku: 'Rs05K', name: 'Black Abaya with Gold Detailing', price: 1399, img: 'cat4.jpg' },
-    { id: 6, sku: 'Rs06K', name: 'Black Cotton Hijab with Gold Lace', price: 180, img: 'prod5.jpg' },
-    { id: 9, sku: 'Rs09K', name: 'Elegant Olive Green Shrug Abaya', price: 1299, img: 'slider3.jpg' },
-    { id: 7, sku: 'Rs07K', name: 'Embroidered Dual Color Abaya Set', price: 1299, img: 'cat3.jpg' },
-    { id: 10, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 130, img: 'prodt1.jpg' },
-    { id: 11, sku: 'Rs02l', name: 'Premium Pink Stone Hijab', price: 129, img: 'prodt2.jpg' },
-    { id: 12, sku: 'Rs03l', name: 'Dubai Mint Green Stone Hijab', price: 130, img: 'prodt3.jpg' },
-    { id: 13, sku: 'Rs04l', name: 'Dubai Tricolor Hijab Collection', price: 100, img: 'prodt4.jpg' },
-    { id: 14, sku: 'Rs01l', name: 'Black Hijab Cap with Tassels', price: 129, img: 'prodt5.jpg' }, 
-    { id: 15, sku: 'Rs05l', name: 'Exclusive Dubai Georgette Hijab', price: 120, img: 'prodt6.jpg' },
-    { id: 16, sku: 'Rs06l', name: 'Classic Cotton Hijab', price: 120, img: 'prodt7.jpg' }
-];
+const DB_URL = "https://leon-41242-default-rtdb.firebaseio.com/";
 
+let products = [];
 let cart = [];
-let currentProduct = null;
 let currentUser = null;
-let checkoutMode = 'single'; 
-let orderMethod = 'instagram'; // Default is now instagram
-let currentOrderTotal = 0; 
+let currentProduct = null;
+let checkoutMode = 'single';
+let dynamicUpiId = "YOUR_UPI_ID@okaxis";
+let chatPoller = null;
 
-const sellerWhatsAppNumber = '919876543210'; 
-const instagramUsername = 'rs__fashion____009'; 
-const myUpiId = ''; // UPI ID REMOVED FOR NOW
+let checkoutBaseTotal = 0;
+let checkoutDiscount = 0;
+let checkoutFinalTotal = 0;
+let appliedCouponCode = "";
 
-// Initialization (More Secure Load)
+let currentHomeSlide = 0;
+let homeSlideTimer;
+function showHomeSlide(index) {
+    const wrapper = document.getElementById('sliderWrapper');
+    const slides = wrapper.children;
+    if(index >= slides.length) currentHomeSlide = 0;
+    else if(index < 0) currentHomeSlide = slides.length - 1;
+    else currentHomeSlide = index;
+    wrapper.style.transform = `translateX(-${currentHomeSlide * 100}%)`;
+}
+function nextHomeSlide() { showHomeSlide(currentHomeSlide + 1); resetHomeTimer(); }
+function prevHomeSlide() { showHomeSlide(currentHomeSlide - 1); resetHomeTimer(); }
+function resetHomeTimer() { clearInterval(homeSlideTimer); homeSlideTimer = setInterval(nextHomeSlide, 4000); }
+
+function showToast(msg, type = 'success') {
+    const existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = `toast-notification`;
+    toast.innerHTML = `<span>${msg}</span>`;
+    toast.style.color = type === 'error' ? '#f64e60' : '#1bc5bd';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+}
+
+function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('rsDarkModeMain', document.body.classList.contains('dark-mode')); document.getElementById('theme-toggle').className = document.body.classList.contains('dark-mode') ? 'fas fa-sun' : 'fas fa-moon'; }
+
 document.addEventListener("DOMContentLoaded", () => {
-    restoreSession(); 
-    renderProducts();
-    startAutoSlide();
+    if (localStorage.getItem('rsDarkModeMain') === 'true') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').className = 'fas fa-sun'; }
+    fetch(DB_URL + 'settings.json').then(r=>r.json()).then(d=>{if(d && d.upiId) dynamicUpiId = d.upiId;}).catch(e=>{});
+    resetHomeTimer();
+    restoreSession();
+    fetchProducts();
 });
 
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
-    toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 3000);
+async function fetchProducts() {
+    try {
+        const res = await fetch(DB_URL + 'products.json'); const data = await res.json();
+        products = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+        renderProducts(products, 'home-grid', 8);
+        renderProducts(products, 'shop-grid', 100);
+    } catch (e) {}
 }
-
-// Dark Mode Toggle Logic
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const themeIcon = document.getElementById('theme-toggle');
-    
-    if (document.body.classList.contains('dark-mode')) {
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
-    } else {
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon');
-    }
-}
-
-// Share Product Logic
-function shareProduct() {
-    if(!currentProduct) return;
-    const shareText = `Hey! Check out this beautiful ${currentProduct.name} at RS Fashion. Only ₹${currentProduct.price}!\n\nBrowse the collection here: https://rsfashion01.netlify.app`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-    window.open(whatsappUrl, '_blank');
-}
-
-// Image Slider Logic
-let slideIndex = 0;
-let slideInterval;
-function showSlide(index) {
-    const wrapper = document.getElementById('sliderWrapper');
-    if (index > 3) slideIndex = 0; 
-    else if (index < 0) slideIndex = 3; 
-    else slideIndex = index;
-    wrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
-}
-function nextSlide() { showSlide(slideIndex + 1); resetSlideTimer(); }
-function prevSlide() { showSlide(slideIndex - 1); resetSlideTimer(); }
-function startAutoSlide() { slideInterval = setInterval(() => { nextSlide(); }, 3500); }
-function resetSlideTimer() { clearInterval(slideInterval); startAutoSlide(); }
 
 function navigate(viewId) {
-    document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active-view'));
-    document.getElementById(viewId).classList.add('active-view');
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+    const target = document.getElementById(viewId);
+    if(target) target.classList.add('active-view');
     window.scrollTo(0, 0);
+    
     if(viewId === 'cart-view') renderCart();
+    if(viewId === 'orders-view') fetchMyOrders();
+    
+    if(viewId === 'chat-view') {
+        if(!currentUser) {
+            document.getElementById('user-chat-box').innerHTML = '<div style="text-align:center; margin-top:40px;"><i class="fas fa-lock" style="font-size:40px; color:#ddd; margin-bottom:15px;"></i><p>Please login to access live support.</p><button onclick="openLogin()" style="margin-top:15px; padding:10px 20px; background:#c5a880; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Login Now</button></div>';
+        } else {
+            document.getElementById('user-chat-input-wrapper').style.display = 'flex';
+            fetchUserMessages();
+            if(!chatPoller) chatPoller = setInterval(fetchUserMessages, 5000);
+        }
+    } else { if(chatPoller) { clearInterval(chatPoller); chatPoller = null; } }
 }
 
-function renderProducts() {
-    const grid = document.getElementById('products-grid');
-    grid.innerHTML = '';
-    products.forEach(p => {
-        grid.innerHTML += `
-            <div class="product-card" onclick="openProduct(${p.id})">
-                <div class="product-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
-                <div class="product-info">
-                    <h3 class="p-title">${p.name}</h3>
-                    <p class="p-price">₹${p.price}</p>
-                </div>
-            </div>
-        `;
-    });
-}
-
-// NEW FUNCTION: Render Suggested Products
-function renderSuggestedProducts(excludeId) {
-    const suggestedGrid = document.getElementById('suggested-products-grid');
-    if (!suggestedGrid) return;
-    
-    suggestedGrid.innerHTML = '';
-    
-    let availableProducts = products.filter(p => p.id !== excludeId);
-    availableProducts = availableProducts.sort(() => 0.5 - Math.random());
-    let suggestions = availableProducts.slice(0, 4);
-    
-    suggestions.forEach(p => {
-        suggestedGrid.innerHTML += `
-            <div class="product-card" onclick="openProduct(${p.id})">
-                <div class="product-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
-                <div class="product-info">
-                    <h3 class="p-title">${p.name}</h3>
-                    <p class="p-price">₹${p.price}</p>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebar-overlay').style.display = 'block';
-}
-function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').style.display = 'none';
-}
-function toggleSearch() {
-    const searchBox = document.getElementById('search-container');
-    searchBox.style.display = searchBox.style.display === 'block' ? 'none' : 'block';
-    document.getElementById('search-input').focus();
-}
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+function toggleSearch() { const s = document.getElementById('search-container'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; document.getElementById('search-input').focus(); }
 
 function filterProducts() {
     const query = document.getElementById('search-input').value.toLowerCase();
-    const suggestionsBox = document.getElementById('search-suggestions');
-    if(query.length === 0) { suggestionsBox.style.display = 'none'; return; }
-    const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
-    suggestionsBox.innerHTML = '';
+    const box = document.getElementById('search-suggestions');
+    if(query.length === 0) { box.style.display = 'none'; return; }
+    const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+    box.innerHTML = '';
     if(filtered.length > 0) {
-        filtered.forEach(p => {
-            suggestionsBox.innerHTML += `
-                <div class="suggestion-item" onclick="openProduct(${p.id}); document.getElementById('search-container').style.display='none';">
-                    <img src="${p.img}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;">
-                    <div><div style="font-weight: 500;">${p.name}</div><div style="color: var(--accent-color); font-size: 12px;">ID: ${p.sku} | ₹${p.price}</div></div>
-                </div>
-            `;
-        });
-        suggestionsBox.style.display = 'block';
-    } else {
-        suggestionsBox.innerHTML = '<div class="suggestion-item">No products found</div>';
-        suggestionsBox.style.display = 'block';
+        filtered.forEach(p => { box.innerHTML += `<div class="suggestion-item" onclick="openProduct('${p.id}'); document.getElementById('search-container').style.display='none';"><img src="${p.img}"><div><b>${p.name}</b><br><span style="color:#c5a880; font-size:12px;">₹${p.price}</span></div></div>`; });
+        box.style.display = 'block';
     }
 }
+function renderProducts(productList, containerId, limit = 100) {
+    const grid = document.getElementById(containerId);
+    if (!grid) return;
+    grid.innerHTML = '';
+    productList.slice(0, limit).forEach(p => {
+        let soldOut = p.status === 'Out of Stock' || p.stock <= 0;
+        let finalPrice = p.discount > 0 ? Math.round(p.price - (p.price * (p.discount/100))) : p.price;
+        let badgeHtml = (p.discount > 0 && !soldOut) ? `<div style="position:absolute; top:10px; right:10px; background:#f64e60; color:white; padding:4px 8px; font-size:11px; font-weight:bold; border-radius:4px; z-index:2;">${p.discount}% OFF</div>` : '';
+        let soldOutBadge = soldOut ? `<div style="position:absolute; top:10px; left:10px; background:#1e1e2d; color:white; padding:4px 8px; font-size:11px; font-weight:bold; border-radius:4px; z-index:2;">Sold Out</div>` : '';
+        let priceHtml = p.discount > 0 ? `<span style="text-decoration:line-through; color:#888; font-size:11px; margin-right:5px;">₹${p.price}</span>₹${finalPrice}` : `₹${p.price}`;
+        grid.innerHTML += `<div class="product-card" onclick="openProduct('${p.id}')" style="position:relative; ${soldOut ? 'opacity:0.6' : ''}">${soldOutBadge} ${badgeHtml}<div class="product-img-wrap"><img src="${p.img}" style="${soldOut ? 'filter:grayscale(1)' : ''}"></div><div class="product-info"><h3>${p.name}</h3><p style="color:var(--accent-color); font-weight:bold;">${priceHtml}</p></div></div>`;
+    });
+}
+
+let activeGallery = [];
+let galleryIndex = 0;
+function updateGalleryUI() { if(activeGallery.length > 0) document.getElementById('pd-img').src = activeGallery[galleryIndex]; }
+function nextGalleryImage() { galleryIndex = (galleryIndex + 1) % activeGallery.length; updateGalleryUI(); }
+function prevGalleryImage() { galleryIndex = (galleryIndex === 0) ? activeGallery.length - 1 : galleryIndex - 1; updateGalleryUI(); }
 
 function openProduct(id) {
     currentProduct = products.find(p => p.id === id);
-    document.getElementById('pd-img').src = currentProduct.img;
-    document.getElementById('pd-img-thumb1').src = currentProduct.img;
-    document.getElementById('pd-img-thumb2').src = 'prod1.jpg'; 
-    document.getElementById('pd-img-thumb3').src = 'prod3.jpg'; 
-    document.getElementById('pd-id').innerText = `Product ID: ${currentProduct.sku}`;
+    activeGallery = currentProduct.gallery && currentProduct.gallery.length > 0 ? currentProduct.gallery : [currentProduct.img];
+    galleryIndex = 0; updateGalleryUI();
+    document.getElementById('gal-left').style.display = activeGallery.length > 1 ? 'flex' : 'none';
+    document.getElementById('gal-right').style.display = activeGallery.length > 1 ? 'flex' : 'none';
     document.getElementById('pd-title').innerText = currentProduct.name;
-    document.getElementById('pd-price').innerText = `₹${currentProduct.price}`;
+    document.getElementById('pd-id').innerText = "ID: " + currentProduct.id;
+    let finalPrice = currentProduct.discount > 0 ? Math.round(currentProduct.price - (currentProduct.price * (currentProduct.discount/100))) : currentProduct.price;
+    currentProduct.finalPrice = finalPrice;
+    document.getElementById('pd-price').innerHTML = currentProduct.discount > 0 ? `<span style="text-decoration:line-through; color:#888; font-size:14px; margin-right:8px;">₹${currentProduct.price}</span>₹${finalPrice} <span style="color:#f64e60; font-size:12px;">(${currentProduct.discount}% OFF)</span>` : `₹${currentProduct.price}`;
     
-    // Call the new suggestion function
-    renderSuggestedProducts(id);
+    let featuresList = document.getElementById('pd-features');
+    featuresList.innerHTML = `<li><i class="fas fa-check-circle"></i> Premium Quality Fabric</li>`;
+    featuresList.innerHTML += currentProduct.paymentMode === 'UPI Only' ? `<li style="color:#d9534f;"><i class="fas fa-exclamation-circle"></i> Prepaid / UPI Only (No COD)</li>` : `<li><i class="fas fa-check-circle"></i> Cash on Delivery Available</li>`;
     
+    let suggestions = products.filter(p => p.id !== id).sort(() => 0.5 - Math.random()).slice(0, 4);
+    renderProducts(suggestions, 'suggested-products-grid', 4);
     navigate('product-view');
 }
 
-function changeMainImg(src) { document.getElementById('pd-img').src = src; }
+function shareProduct() {
+    if(!currentProduct) return;
+    const text = `Hey! Check out this beautiful ${currentProduct.name} for just ₹${currentProduct.finalPrice} at RS Fashion! 🛍️\n\n${window.location.href}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`);
+}
 
-/* CART LOGIC WITH LOCALSTORAGE */
+async function processLogin() {
+    const name = document.getElementById('login-name').value; const phone = document.getElementById('login-number').value;
+    if(!name || !phone) return showToast("Enter Name & Number", "error");
+    try {
+        const res = await fetch(DB_URL + 'users.json'); const data = await res.json();
+        let existingUser = null; let existingKey = null;
+        if(data) { for(let key in data) { if(data[key].phone === phone) { existingUser = data[key]; existingKey = key; break; } } }
+        if(existingUser && existingUser.banned) { closeLogin(); alert("Account Suspended."); return; }
+        if(existingUser) { currentUser = existingUser; currentUser.dbKey = existingKey; } 
+        else {
+            currentUser = { name: name, phone: phone, userId: `RS${Math.floor(10000 + Math.random() * 90000)}`, banned: false, cart: [] };
+            const postRes = await fetch(DB_URL + 'users.json', { method: 'POST', body: JSON.stringify(currentUser) });
+            const postData = await postRes.json(); currentUser.dbKey = postData.name;
+        }
+        if(currentUser.cart && currentUser.cart.length > 0 && cart.length === 0) { cart = currentUser.cart; localStorage.setItem('rsFashionCart', JSON.stringify(cart)); document.getElementById('cart-counter').innerText = cart.length; }
+        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
+        updateProfileUI(); closeLogin(); navigate('profile-view'); showToast("Logged in!");
+    } catch (error) {}
+}
+
+function logoutUser() { currentUser = null; localStorage.removeItem('rsFashionUser'); window.location.reload(); }
+function updateProfileUI() {
+    if(currentUser) {
+        document.getElementById('sidebar-user-display').innerHTML = `<b>${currentUser.name}</b><br>ID: ${currentUser.userId}`;
+        if(document.getElementById('prof-name')) document.getElementById('prof-name').innerText = currentUser.name;
+        if(document.getElementById('prof-phone')) document.getElementById('prof-phone').innerText = currentUser.phone;
+        if(document.getElementById('prof-id')) document.getElementById('prof-id').innerText = currentUser.userId;
+    }
+}
+
+async function restoreSession() {
+    const savedCart = localStorage.getItem('rsFashionCart');
+    if(savedCart) { cart = JSON.parse(savedCart); document.getElementById('cart-counter').innerText = cart.length; }
+    const u = localStorage.getItem('rsFashionUser');
+    if(u) { currentUser = JSON.parse(u); updateProfileUI(); }
+}
+
+function handleUserClick() { if(currentUser) navigate('profile-view'); else document.getElementById('login-modal').style.display='flex'; }
+function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
+function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
+function syncCart() { if(currentUser && currentUser.dbKey) { fetch(`${DB_URL}users/${currentUser.dbKey}.json`, { method: 'PATCH', body: JSON.stringify({ cart: cart }) }); currentUser.cart = cart; localStorage.setItem('rsFashionUser', JSON.stringify(currentUser)); } }
+
 function addToCartFromDetail() {
-    cart.push(currentProduct);
-    saveCart(); 
+    if(!currentProduct) return;
+    if(currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0) return showToast("Sold Out!", "error");
+    cart.push({ ...currentProduct, price: currentProduct.finalPrice || currentProduct.price });
     document.getElementById('cart-counter').innerText = cart.length;
-    showToast(`${currentProduct.name} added to cart!`);
+    localStorage.setItem('rsFashionCart', JSON.stringify(cart)); syncCart(); showToast("Added to cart!");
 }
 
 function renderCart() {
-    const container = document.getElementById('cart-items-container');
-    container.innerHTML = '';
-    let total = 0;
-    if(cart.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding: 20px;">Your cart is empty.</p>';
-    } else {
-        cart.forEach((item, index) => {
-            total += item.price;
-            container.innerHTML += `
-                <div class="cart-item">
-                    <img src="${item.img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
-                    <div style="flex-grow: 1;"><p style="font-size: 11px; color: var(--text-gray);">ID: ${item.sku}</p><h4>${item.name}</h4><p style="color: var(--accent-color); font-weight: bold;">₹${item.price}</p></div>
-                    <i class="fas fa-trash" style="color: red; cursor: pointer; padding: 10px;" onclick="removeFromCart(${index})"></i>
-                </div>
-            `;
-        });
-    }
+    const container = document.getElementById('cart-items-container'); container.innerHTML = ''; let total = 0;
+    cart.forEach((item, index) => {
+        total += item.price;
+        container.innerHTML += `<div class="cart-item"><img src="${item.img}"><div><h4>${item.name}</h4><p style="font-weight:bold; color:var(--accent-color);">₹${item.price}</p></div><i class="fas fa-trash" style="color:#f64e60; margin-left:auto; cursor:pointer;" onclick="removeFromCart(${index})"></i></div>`;
+    });
     document.getElementById('cart-total').innerText = `Total: ₹${total}`;
 }
+function removeFromCart(index) { cart.splice(index, 1); localStorage.setItem('rsFashionCart', JSON.stringify(cart)); renderCart(); document.getElementById('cart-counter').innerText = cart.length; syncCart(); }
 
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    saveCart(); 
-    document.getElementById('cart-counter').innerText = cart.length;
-    renderCart();
-}
-
-function saveCart() {
-    localStorage.setItem('rsFashionCart', JSON.stringify(cart));
-}
-
-/* USER LOGIC WITH LOCALSTORAGE */
-function handleUserClick() {
-    if(currentUser) navigate('profile-view');
-    else openLogin();
-}
-
-function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
-function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
-
-function processLogin() {
-    const name = document.getElementById('login-name').value;
-    const phone = document.getElementById('login-number').value;
-    if(name && phone) {
-        const uniqueId = `Rs${Math.floor(1000 + Math.random() * 9000)}R`;
-        currentUser = { name, phone, id: uniqueId };
-        
-        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
-        
-        updateProfileUI();
-        closeLogin();
-        navigate('profile-view');
-        showToast("Successfully logged in!");
-    } else { showToast("Please enter both Name and Number."); }
-}
-
-function logoutUser() {
-    currentUser = null;
-    localStorage.removeItem('rsFashionUser');
-    
-    updateProfileUI();
-    document.getElementById('login-name').value = '';
-    document.getElementById('login-number').value = '';
-    navigate('home-view');
-    showToast("Logged out successfully.");
-}
-
-function updateProfileUI() {
-    if(currentUser) {
-        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${currentUser.name}</b><br>ID: <span style="color: var(--accent-color)">${currentUser.id}</span>`;
-        document.getElementById('prof-name').innerText = currentUser.name;
-        document.getElementById('prof-phone').innerText = currentUser.phone;
-        document.getElementById('prof-id').innerText = currentUser.id;
+window.selectPayment = function(type) {
+    document.getElementById('cod-label').classList.remove('selected'); document.getElementById('upi-label').classList.remove('selected');
+    document.getElementById('cod-check').style.color = '#ddd'; document.getElementById('upi-check').style.color = '#ddd';
+    if(type === 'COD') {
+        document.getElementById('cod-label').classList.add('selected'); document.getElementById('cod-check').style.color = '#c5a880';
+        document.getElementById('upi-proof-section').style.display = 'none'; document.querySelector('input[value="COD"]').checked = true;
     } else {
-        document.getElementById('sidebar-user-display').innerText = "Not Logged In";
-        document.getElementById('prof-name').innerText = "Name";
-        document.getElementById('prof-phone').innerText = "...";
-        document.getElementById('prof-id').innerText = "...";
+        document.getElementById('upi-label').classList.add('selected'); document.getElementById('upi-check').style.color = '#c5a880';
+        document.getElementById('upi-proof-section').style.display = 'block'; document.querySelector('input[value="UPI"]').checked = true;
     }
-}
-
-function restoreSession() {
-    const savedUser = localStorage.getItem('rsFashionUser');
-    if(savedUser) {
-        currentUser = JSON.parse(savedUser);
-        updateProfileUI();
-    }
-    const savedCart = localStorage.getItem('rsFashionCart');
-    if(savedCart) {
-        cart = JSON.parse(savedCart);
-        document.getElementById('cart-counter').innerText = cart.length;
-    }
-}
-
-function toggleUPI(show) {
-    const upiSection = document.getElementById('upi-section');
-    upiSection.style.display = show ? 'block' : 'none';
 }
 
 function openCheckoutModal(mode) {
-    if (!currentUser) {
-        showToast("Please login first to place an order!");
-        openLogin(); 
-        return; 
-    }
-
+    if (!currentUser) return showToast("Login First!", "error");
     checkoutMode = mode;
-    currentOrderTotal = 0;
-
-    if (mode === 'single') {
-        currentOrderTotal = currentProduct.price;
-        document.getElementById('checkout-product-name').innerText = `1 Item - ₹${currentOrderTotal}`;
-    } else {
-        if(cart.length === 0) { showToast("Your cart is empty!"); return; }
-        currentOrderTotal = cart.reduce((sum, item) => sum + item.price, 0);
-        document.getElementById('checkout-product-name').innerText = `Cart Total (${cart.length} items) - ₹${currentOrderTotal}`;
-    }
+    let orderItems = checkoutMode === 'single' ? [currentProduct] : cart;
+    let isUpiOnly = orderItems.some(i => i.paymentMode === 'UPI Only');
+    
+    checkoutBaseTotal = orderItems.reduce((s, i) => s + (i.finalPrice || i.price), 0);
+    checkoutDiscount = 0; checkoutFinalTotal = checkoutBaseTotal; appliedCouponCode = "";
     
     document.getElementById('chk-name').value = currentUser.name;
     document.getElementById('chk-phone').value = currentUser.phone;
     
-    document.getElementById('upi-amount').innerText = currentOrderTotal;
+    document.getElementById('chk-coupon').value = "";
+    document.getElementById('chk-discount-row').style.display = 'none';
+    document.getElementById('chk-subtotal').innerText = checkoutBaseTotal;
+    document.getElementById('chk-final-total').innerText = checkoutFinalTotal;
+    document.getElementById('display-upi-total').innerText = checkoutFinalTotal;
     
-    // UPDATED SMART UPI LOGIC
-    if (myUpiId === '') {
-        document.getElementById('upi-link').href = "#";
-        document.getElementById('upi-link').onclick = (e) => { 
-            e.preventDefault(); 
-            alert("Payment system is ready! Please provide your UPI ID to activate this button."); 
-        };
-    } else {
-        const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order Payment`;
-        document.getElementById('upi-link').href = upiLink;
-        document.getElementById('upi-link').onclick = null;
-    }
+    let upiLinkStr = `upi://pay?pa=${dynamicUpiId}&pn=RS%20Fashion&am=${checkoutFinalTotal}&cu=INR`;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const payBtn = document.getElementById('pay-now-btn'); const qrImg = document.getElementById('qr-code-img');
+    
+    if (isMobile) { payBtn.style.display = 'block'; qrImg.style.display = 'none'; payBtn.href = upiLinkStr; } 
+    else { payBtn.style.display = 'none'; qrImg.style.display = 'block'; qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLinkStr)}`; }
 
-    document.querySelector('input[value="Cash on Delivery (COD)"]').checked = true;
-    toggleUPI(false);
+    document.getElementById('screenshot-preview').style.display = 'none'; document.getElementById('upi-screenshot').value = '';
 
+    if (isUpiOnly) { document.getElementById('cod-label').style.display = 'none'; selectPayment('UPI'); } 
+    else { document.getElementById('cod-label').style.display = 'flex'; selectPayment('COD'); }
+    
     document.getElementById('checkout-modal').style.display = 'flex';
 }
-
 function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
 
-// Big Instruction Modal for Instagram
-function showInstagramInstructionModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '9999'; // Stay on top of everything
+function applyCouponCode() {
+    let code = document.getElementById('chk-coupon').value.trim().toUpperCase();
+    if(!code) return;
+    let orderItems = checkoutMode === 'single' ? [currentProduct] : cart;
+    let discountFound = 0;
+    orderItems.forEach(item => { if(item.coupon && item.coupon.toUpperCase() === code) { discountFound += Math.round(item.price * (item.discount / 100)); } });
     
-    modal.innerHTML = `
-        <div class="modal-content" style="text-align: center; padding: 30px 20px;">
-            <div style="width: 60px; height: 60px; background: var(--light-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <i class="fab fa-instagram" style="font-size: 35px; color: #E1306C;"></i>
-            </div>
-            <h2 style="font-family: 'Playfair Display'; margin-bottom: 10px; color: var(--text-main);">One Last Step!</h2>
-            
-            <div style="background: var(--light-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: left; margin-bottom: 20px;">
-                <p style="font-size: 14px; color: var(--text-main); margin-bottom: 8px;">✅ <b>Order details copied automatically!</b></p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">1. Click the button below to open Instagram.</p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">2. Go to RS Fashion's chat.</p>
-                <p style="font-size: 13px; color: var(--text-gray);">3. <b>Paste</b> the message and send to confirm!</p>
-            </div>
-
-            <button onclick="window.open('https://ig.me/m/${instagramUsername}', '_blank'); this.parentElement.parentElement.remove();" style="width: 100%; padding: 14px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(225, 48, 108, 0.3);">
-                Open Instagram
-            </button>
-            <p onclick="this.parentElement.parentElement.remove()" style="margin-top: 15px; color: var(--text-gray); cursor: pointer; text-decoration: underline; font-size: 13px;">Cancel</p>
-        </div>
-    `;
-    document.body.appendChild(modal);
+    if (discountFound > 0) { 
+        checkoutDiscount = discountFound; checkoutFinalTotal = checkoutBaseTotal - discountFound; appliedCouponCode = code; 
+        document.getElementById('chk-discount-row').style.display = 'inline';
+        document.getElementById('chk-discount').innerText = checkoutDiscount;
+        document.getElementById('chk-final-total').innerText = checkoutFinalTotal;
+        document.getElementById('display-upi-total').innerText = checkoutFinalTotal; 
+        
+        let upiLinkStr = `upi://pay?pa=${dynamicUpiId}&pn=RS%20Fashion&am=${checkoutFinalTotal}&cu=INR`;
+        document.getElementById('pay-now-btn').href = upiLinkStr;
+        if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLinkStr)}`;
+        }
+        showToast("🎉 Coupon Applied!", "success"); 
+    } else { showToast("❌ Invalid Coupon", "error"); }
 }
 
-document.getElementById('checkout-form').addEventListener('submit', function(e) {
+function previewScreenshot(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('screenshot-preview').src = e.target.result;
+            document.getElementById('screenshot-preview').style.display = 'block';
+            document.getElementById('upload-text').innerText = "Screenshot Attached! ✅";
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function resizeImage(file) { return new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); const scale = 400 / img.width; canvas.width = 400; canvas.height = img.height * scale; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; reader.readAsDataURL(file); }); }
+
+document.getElementById('checkout-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const name = document.getElementById('chk-name').value;
-    const phone = document.getElementById('chk-phone').value;
-    const address = `${document.getElementById('chk-add1').value}, ${document.getElementById('chk-add2').value}`;
-    const pin = document.getElementById('chk-pin').value;
-    
-    const selectedPayMode = document.querySelector('input[name="pay_mode"]:checked').value;
+    const btn = document.getElementById('order-now-btn'); btn.innerHTML = "Processing..."; btn.disabled = true;
 
-    let msg = `*New Order Request!*\n\n`;
-    
-    msg += `*User ID:* ${currentUser.id}\n`;
-    msg += `*Registered Name:* ${currentUser.name}\n\n`;
-    
-    msg += `*Items Ordered:*\n`;
-    let finalTotal = 0;
-
-    if(checkoutMode === 'single') {
-        msg += `1. ${currentProduct.name} (ID: ${currentProduct.sku}) - ₹${currentProduct.price}\n`;
-        finalTotal = currentProduct.price;
-    } else {
-        cart.forEach((item, i) => {
-            msg += `${i+1}. ${item.name} (ID: ${item.sku}) - ₹${item.price}\n`;
-            finalTotal += item.price;
-        });
+    let selectedPayment = document.querySelector('input[name="payment_method"]:checked').value;
+    let upiScreenshotBase64 = "";
+    if (selectedPayment === "UPI") {
+        const fileInput = document.getElementById('upi-screenshot');
+        if (!fileInput.files || fileInput.files.length === 0) { btn.innerHTML = "Confirm Order"; btn.disabled = false; return showToast("Screenshot required for UPI!", "error"); }
+        upiScreenshotBase64 = await resizeImage(fileInput.files[0]);
     }
 
-    msg += `\n*Total Amount:* ₹${finalTotal}\n`;
-    msg += `*Payment Mode:* ${selectedPayMode}\n\n`; 
-    
-    msg += `*Delivery Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
-    msg += `*Order from the website*`;
+    let itemsString = checkoutMode === 'single' ? currentProduct.name : cart.map(i => i.name).join(", ");
+    if(appliedCouponCode) { itemsString += ` [Coupon Used: ${appliedCouponCode}]`; }
 
-    // UPDATED BUTTON LOGIC
-    if (orderMethod === 'whatsapp') {
-        showToast("WhatsApp ordering is coming soon! Please use Instagram to place your order.");
-        return; // Stops here, doesn't close the modal
-        
-    } else if (orderMethod === 'instagram') {
-        const tempTextArea = document.createElement("textarea");
-        tempTextArea.value = msg;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-        tempTextArea.setSelectionRange(0, 99999); 
-        
-        try {
-            document.execCommand("copy");
-            
-            closeCheckout();
-            showInstagramInstructionModal();
-            
-            if(checkoutMode === 'cart') {
-                cart = []; 
-                saveCart(); 
-                document.getElementById('cart-counter').innerText = 0;
-            }
-            document.getElementById('checkout-form').reset();
-            
-        } catch (err) {
-            showToast("Copy failed on this browser. Please try again.");
-        }
-        document.body.removeChild(tempTextArea);
-    }
+    const orderData = {
+        userId: currentUser.userId, customerName: currentUser.name, phone: currentUser.phone,
+        address: `${document.getElementById('chk-add1').value}, ${document.getElementById('chk-add2').value} - Pin: ${document.getElementById('chk-pin').value}`,
+        items: itemsString, totalAmount: checkoutFinalTotal, status: "Pending", deliveryTime: "Awaiting Admin Confirmation",
+        paymentType: selectedPayment, upiScreenshot: upiScreenshotBase64
+    };
+
+    try {
+        await fetch(DB_URL + 'orders.json', { method: 'POST', body: JSON.stringify(orderData) }); 
+        closeCheckout();
+        if(checkoutMode === 'cart') { cart = []; localStorage.setItem('rsFashionCart', JSON.stringify(cart)); syncCart(); document.getElementById('cart-counter').innerText = 0; }
+        showToast("🎉 Order Placed!", "success"); setTimeout(() => { navigate('orders-view'); }, 1500);
+    } catch (err) { showToast("Failed to place order.", "error"); }
+    btn.innerHTML = "Confirm Order"; btn.disabled = false; 
 });
+
+async function fetchMyOrders() {
+    const container = document.getElementById('order-history-list');
+    if(!container || !currentUser) return;
+    container.innerHTML = '<p style="text-align:center;"><i class="fas fa-spinner fa-spin"></i> Checking live status...</p>';
+    try {
+        const res = await fetch(DB_URL + 'orders.json'); const data = await res.json();
+        container.innerHTML = ''; let hasOrders = false;
+        if(data) {
+            Object.keys(data).reverse().forEach(key => {
+                let o = data[key];
+                if(o.userId === currentUser.userId) {
+                    hasOrders = true;
+                    let color = o.status === 'Pending' ? '#ffa800' : (o.status === 'Rejected' ? '#f64e60' : '#1bc5bd');
+                    let payBadge = o.paymentType === 'COD' ? '<span style="background:#333; color:white; padding:2px 6px; border-radius:4px; font-size:9px; margin-left:5px;">COD</span>' : '<span style="background:#6528F7; color:white; padding:2px 6px; border-radius:4px; font-size:9px; margin-left:5px;">UPI</span>';
+                    container.innerHTML += `<div style="background:var(--card-bg); padding:15px; border-radius:8px; margin-bottom:15px; border-left:4px solid ${color}; border:1px solid var(--border-color);"><div style="display:flex; justify-content:space-between; align-items:center;"><b>${o.items}</b><span style="background:${color}; color:white; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold;">${o.status}</span></div><p style="font-size:13px; margin-top:10px; font-weight:bold;">🚚 ${o.deliveryTime}</p><p style="font-size:12px; color:var(--text-gray); margin-top:5px;">Amount: ₹${o.totalAmount} ${payBadge}</p></div>`;
+                }
+            });
+        }
+        if(!hasOrders) container.innerHTML = '<p style="text-align:center; color:var(--text-gray);">No orders found.</p>';
+    } catch (e) {}
+}
+
+async function fetchUserMessages() {
+    if(!currentUser || !currentUser.dbKey) return;
+    try {
+        let res = await fetch(`${DB_URL}chats/${currentUser.dbKey}/messages.json`); let msgs = await res.json();
+        let box = document.getElementById('user-chat-box');
+        box.innerHTML = '';
+        if(msgs) {
+            Object.keys(msgs).forEach(k => {
+                let m = msgs[k]; let isMe = m.sender === 'user'; let cssClass = isMe ? 'chat-user' : 'chat-admin';
+                box.innerHTML += `<div class="chat-bubble ${cssClass}">${m.text || ''}</div>`;
+            });
+            box.scrollTop = box.scrollHeight;
+        } else { box.innerHTML += '<p style="text-align:center; color:var(--text-gray); font-size:13px; margin-top:20px;">Send a message to start chatting with us.</p>'; }
+    } catch(e) {}
+}
+
+async function sendUserMessage() {
+    if(!currentUser || !currentUser.dbKey) return;
+    let input = document.getElementById('user-chat-input'); let text = input.value.trim(); if(!text) return; input.value = '';
+    try {
+        await fetch(`${DB_URL}chats/${currentUser.dbKey}/userName.json`, { method: 'PUT', body: JSON.stringify(currentUser.name) });
+        await fetch(`${DB_URL}chats/${currentUser.dbKey}/messages.json`, { method: 'POST', body: JSON.stringify({ sender: 'user', text: text, timestamp: Date.now(), status: 'sent' }) });
+        fetchUserMessages();
+    } catch(e) {}
+}
