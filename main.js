@@ -54,7 +54,7 @@ async function fetchProducts() {
         const res = await fetch(DB_URL + 'products.json'); const data = await res.json();
         products = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
         renderProducts(products, 'home-grid', 8);
-        renderProducts(products, 'shop-grid', 100);
+        renderProducts(products, 'shop-grid', 500);
     } catch (e) {}
 }
 
